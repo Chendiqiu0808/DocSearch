@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "expo": "^52.0.46",
+    "expo-dev-client": "^5.0.20",
+    "papaparse": "^5.5.2",
+    "react-native-fs": "^2.20.0",
+    "react-native-gesture-handler": "~2.20.2",
+    "react-native-paper": "^5.13.3",
+    "react-native-vector-icons": "^10.2.0"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "^18.0.0",
+    "@types/react": "~18.3.12",
+    "typescript": "^5.8.3"
+  }
+}
