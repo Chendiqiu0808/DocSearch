@@ -1,105 +1,162 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, FlatList, Button, Alert } from 'react-native';
 import Papa from 'papaparse';
 import RNFS from 'react-native-fs';
 import { IconButton } from 'react-native-paper';
+import * as DocumentPicker from 'expo-document-picker';
 
 const App = () => {
   const [data, setData] = useState<string[][]>([]);
-  const [searchText, setSearchText] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  
-  // 读取CSV文件
-  const loadCSV = async () => {
+  const [currentPath, setCurrentPath] = useState(RNFS.DocumentDirectoryPath);
+  const [files, setFiles] = useState<RNFS.ReadDirItem[]>([]);
+
+  // 读取目录内容
+  const readDirectory = async (path: string) => {
     try {
-      const csvFile = await RNFS.readFileAssets('yourfile.csv');
-      Papa.parse(csvFile, {
-        complete: (results) => {
-          setData(results.data);
-        },
-        error: (error) => {
-          console.error(error);
-        }
-      });
+      const result = await RNFS.readDir(path);
+      setFiles(result);
+      setCurrentPath(path);
     } catch (error) {
-      console.error(error);
+      console.error('读取目录失败:', error);
     }
   };
 
-  // 拼音首字母搜索
-  const searchData = () => {
-    return data.filter(row => 
-      row.some(cell => 
-        cell.toLowerCase().includes(searchText.toLowerCase())
-      )
-    );
+  // 读取CSV文件
+  const readCSVFile = async (filePath: string) => {
+    try {
+      const content = await RNFS.readFile(filePath, 'utf8');
+      Papa.parse(content, {
+        complete: (results: { data: string[][] }) => {
+          setData(results.data);
+        },
+        error: (error: Error) => {
+          console.error('解析CSV失败:', error);
+        }
+      });
+    } catch (error) {
+      console.error('读取文件失败:', error);
+    }
   };
 
-  // ... existing code ...
+  // 打开文件选择器并选择CSV文件
+  const pickCSVFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'text/csv',
+        copyToCacheDirectory: true
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        console.log('选择的文件:', file.uri);
+        await readCSVFile(file.uri);
+      } else {
+        console.log('文件选择已取消');
+      }
+    } catch (error) {
+      console.error('选择文件时出错:', error);
+      Alert.alert('错误', '选择文件时出错');
+    }
+  };
+
+  // 处理文件或目录点击
+  const handleFilePress = async (file: RNFS.ReadDirItem) => {
+    if (file.isDirectory()) {
+      await readDirectory(file.path);
+    } else if (file.name.toLowerCase().endsWith('.csv')) {
+      await readCSVFile(file.path);
+    }
+  };
+
+  // 返回上级目录
+  const goBack = async () => {
+    const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+    if (parentPath.length >= RNFS.DocumentDirectoryPath.length) {
+      await readDirectory(parentPath);
+    }
+  };
+
+  // 初始化时读取根目录
+  useEffect(() => {
+    readDirectory(RNFS.DocumentDirectoryPath);
+  }, []);
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="输入拼音首字母搜索"
-        value={searchText}
-        onChangeText={setSearchText}
-      />
-      
-      {/* 显示前3条匹配结果 */}
-      {searchData().slice(0, 3).map((row, index) => (
-        <Text key={index} style={styles.dataText}>
-          {row.join(', ')}
-        </Text>
-      ))}
+      <View style={styles.header}>
+        <Button title="返回上级" onPress={goBack} />
+        <Button title="浏览CSV文件" onPress={pickCSVFile} />
+        <Text>{currentPath}</Text>
+      </View>
 
-      {/* 更多结果弹窗 */}
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          onPress={() => setModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            <ScrollView>
-              {searchData().slice(currentPage * 10, (currentPage + 1) * 10).map((row, index) => (
-                <Text key={index} style={styles.modalText}>
-                  {row.join(', ')}
-                </Text>
-              ))}
-            </ScrollView>
-            <IconButton 
-              icon="chevron-up" 
-              onPress={() => setCurrentPage(Math.max(0, currentPage - 1))} 
-            />
-            <IconButton 
-              icon="chevron-down" 
-              onPress={() => setCurrentPage(currentPage + 1)} 
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      <FlatList
+        data={files}
+        keyExtractor={(item) => item.path}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.fileItem}
+            onPress={() => handleFilePress(item)}
+          >
+            <Text>
+              {item.isDirectory() ? '📁 ' : '📄 '}
+              {item.name}
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      {data.length > 0 && (
+        <View style={styles.csvContent}>
+          <Text style={styles.title}>CSV内容:</Text>
+          <ScrollView>
+            {data.map((row, i) => (
+              <View key={i} style={styles.row}>
+                {row.map((cell, j) => (
+                  <Text key={j} style={styles.cell}>{cell}</Text>
+                ))}
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  searchInput: { height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 20 },
-  dataText: { fontSize: 18, color: '#333', marginBottom: 10 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center' },
-  modalContent: { 
-    backgroundColor: 'white', 
-    margin: 20, 
-    padding: 20,
-    borderRadius: 10,
-    maxHeight: '80%'
+  container: {
+    flex: 1,
+    padding: 10,
   },
-  modalText: { fontSize: 20, color: '#000', marginBottom: 15 }
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    justifyContent: 'space-between',
+  },
+  fileItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  csvContent: {
+    flex: 1,
+    marginTop: 10,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  cell: {
+    flex: 1,
+    padding: 5,
+  },
 });
 
 export default App;
