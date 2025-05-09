@@ -17,6 +17,24 @@
     "apk": {
       "android": {
         "buildType": "apk"
+      },
+      "developmentClient": false,
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m1-medium"
+      }
+    },
+    "local": {
+      "android": {
+        "buildType": "apk"
+      },
+      "developmentClient": false,
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m1-medium"
+      },
+      "env": {
+        "EXPO_USE_LOCAL_CLI": "1"
       }
     }
   },
