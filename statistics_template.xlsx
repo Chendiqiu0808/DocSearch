@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">
+  <FileSharing xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" readOnlyRecommended="false" userName=""/>
+  <WorkbookPr xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" defaultThemeVersion="124332"/>
+  <BookViews xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <WorkbookView xWindow="240" yWindow="105" windowWidth="19200" windowHeight="11640"/>
+  </BookViews>
+  <Sheets xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <Sheet name="数据" sheetId="1" r:id="rId1"/>
+    <Sheet name="透视表" sheetId="2" r:id="rId2"/>
+    <Sheet name="图表" sheetId="3" r:id="rId3"/>
+  </Sheets>
+  <DefinedNames xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>
+  <CalcPr xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" calcId="162913"/>
+</Workbook>
